@@ -1,6 +1,6 @@
 {
   "name": "@mcptools/filesystem",
-  "version": "1.0.0",
+  "version": "1.1.0-dev",
   "description": "Filesystem operations MCP server providing secure file access and manipulation",
   "main": "dist/index.js",
   "type": "module",
@@ -40,7 +40,9 @@
     "dist",
     "LICENSE",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "docs/API.md",
+    "docs/INTEGRATION.md"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
