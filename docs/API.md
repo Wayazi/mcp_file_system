@@ -1,10 +1,10 @@
 # MCP Filesystem Server API Documentation
 
-This document details all available tools in the MCP Filesystem Server.
+This document details all available tools in the MCP Filesystem Server, verified through comprehensive testing.
 
 ## Tools Overview
 
-All tools follow standard MCP response format, returning content in the following structure:
+All tools follow standard MCP response format with type-safe responses:
 ```typescript
 {
   content: [{ type: 'text', text: string }]
@@ -13,144 +13,144 @@ All tools follow standard MCP response format, returning content in the followin
 
 ### read_file
 
-Reads the contents of a file.
+Reads the contents of a file. Tested with various file sizes and encodings.
 
 **Parameters:**
-- `path` (string): Path to the file to read
+- `path` (string): Path to the file to read, must be within allowed directories
 
 **Returns:**
-- Success: File contents
+- Success: File contents as text
 - Error: Error message with details
 
 **Example:**
 ```typescript
 const result = await client.callTool('read_file', {
-  path: '/path/to/file.txt'
+  path: '/projects/example.txt'
 });
+// result.content[0].text contains the file contents
 ```
-
-### read_multiple_files
-
-Reads multiple files simultaneously.
-
-**Parameters:**
-- `paths` (string[]): Array of file paths to read
-
-**Returns:**
-- Success: Combined contents of all files
-- Error: Individual error messages for failed reads
 
 ### write_file
 
-Creates a new file or overwrites an existing one.
+Creates or overwrites a file with provided content. Tests verify atomic write operations.
 
 **Parameters:**
-- `path` (string): File location
+- `path` (string): Target file path within allowed directories
 - `content` (string): Content to write
 
 **Returns:**
-- Success: Confirmation message
-- Error: Error message with details
+- Success: Confirmation message with path
+- Error: Detailed error for permissions or path issues
 
-### create_directory
-
-Creates a new directory.
-
-**Parameters:**
-- `path` (string): Directory path to create
-
-**Returns:**
-- Success: Confirmation message
-- Error: Error message with details
-
-**Notes:**
-- Creates parent directories if they don't exist
-- No error if directory already exists
+**Example:**
+```typescript
+await client.callTool('write_file', {
+  path: '/projects/new-file.txt',
+  content: 'Hello, World!'
+});
+```
 
 ### list_directory
 
-Lists contents of a directory with file types.
+Lists directory contents with type information. Tests verify correct file type detection.
 
 **Parameters:**
-- `path` (string): Directory path to list
+- `path` (string): Directory to list
 
 **Returns:**
 - Success: List of entries with [FILE] or [DIR] prefix
-- Error: Error message with details
+- Error: Access or path error details
+
+**Example:**
+```typescript
+const result = await client.callTool('list_directory', {
+  path: '/projects'
+});
+// result.content[0].text might be:
+// [FILE] example.txt
+// [DIR] subfolder
+```
 
 ### move_file
 
-Moves or renames files and directories.
+Moves or renames files safely. Tests verify atomicity and error handling.
 
 **Parameters:**
 - `source` (string): Source path
 - `destination` (string): Destination path
 
 **Returns:**
-- Success: Confirmation message
-- Error: Error message if destination exists or other issues
+- Success: Operation confirmation with paths
+- Error: Detailed error for conflicts or permissions
 
-**Notes:**
-- Fails if destination already exists
-- Works for both files and directories
-
-### get_file_info
-
-Retrieves detailed metadata about a file or directory.
-
-**Parameters:**
-- `path` (string): Path to file or directory
-
-**Returns:**
-- Success: JSON object with:
-  - type: 'file' or 'directory'
-  - size: in bytes
-  - created: creation timestamp
-  - modified: last modified timestamp
-  - accessed: last accessed timestamp
-  - permissions: octal string
-- Error: Error message with details
+**Example:**
+```typescript
+await client.callTool('move_file', {
+  source: '/projects/old.txt',
+  destination: '/projects/new.txt'
+});
+```
 
 ### search_files
 
-Recursively searches for files matching a pattern.
+Searches for files by pattern. Tests verify pattern matching and performance.
 
 **Parameters:**
-- `path` (string): Starting directory
-- `pattern` (string): Search pattern
-- `excludePatterns` (string[], optional): Patterns to exclude
+- `path` (string): Base directory for search
+- `pattern` (string): Case-insensitive search pattern
 
 **Returns:**
-- Success: List of matching file paths
-- Error: Error message with details
+- Success: Newline-separated list of matching files
+- Error: Search execution error details
 
-**Notes:**
-- Case-insensitive search
-- Searches recursively through subdirectories
-- Can exclude paths matching specific patterns
+**Example:**
+```typescript
+const result = await client.callTool('search_files', {
+  path: '/projects',
+  pattern: '.txt'
+});
+// result.content[0].text contains matching files
+```
 
-## Security Considerations
+## Security and Testing
 
-1. Path Validation
-   - All paths are validated against allowed directories
-   - No access outside allowed directories
-   - No symbolic link traversal
+1. **Path Validation**
+   - Every operation validates paths against allowed directories
+   - Tests verify no access outside allowed boundaries
+   - Symlink resolution prevents traversal attacks
 
-2. Error Handling
-   - Detailed error messages for troubleshooting
-   - No sensitive information exposure
-   - Graceful failure handling
+2. **Error Handling**
+   - All operations have error test coverage
+   - Clear, actionable error messages
+   - No information leakage in errors
 
-3. Permissions
-   - Respects file system permissions
-   - Operations run as container user
-   - Read-only access by default
+3. **Performance**
+   - Async operations for large files
+   - Batched operations where appropriate
+   - Resource cleanup verified by tests
+
+## Docker Integration
+
+The server runs in a Docker container with:
+- Non-root user execution
+- Volume mounting for project access
+- Health monitoring
+- Resource limits
+
+### Docker Usage
+```bash
+# Using docker-compose
+PROJECTS_DIR=/path/to/projects docker-compose up
+
+# Direct docker run
+docker run -v /path/to/projects:/projects mcptools/filesystem
+```
 
 ## Best Practices
 
-1. Always validate paths before use
-2. Use absolute paths when possible
-3. Handle errors appropriately
-4. Clean up resources after use
-5. Avoid large file operations
-6. Use appropriate encoding (UTF-8)
+1. Mount project directories read-only when possible
+2. Use absolute paths for clarity
+3. Handle errors in your client code
+4. Monitor container health
+5. Stay within allowed directories
+6. Follow the testing patterns for extensions

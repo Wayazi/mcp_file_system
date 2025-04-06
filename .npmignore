@@ -1,0 +1,29 @@
+# Source files (we only want dist in the package)
+src/
+tests/
+__tests__/
+
+# Development configs
+.github/
+jest.config.js
+tsconfig.json
+.eslintrc*
+.prettier*
+.editorconfig
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+CONTRIBUTING.md
+
+# Development
+coverage/
+node_modules/
+*.log

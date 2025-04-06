@@ -21,15 +21,27 @@
     "file-operations",
     "mcptools"
   ],
-  "author": "",
+  "author": {
+    "name": "Wayazi",
+    "url": "https://github.com/Wayazi"
+  },
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Wayazi/mcp-filesystem"
+    "url": "https://github.com/Wayazi/mcp_file_system"
   },
   "bugs": {
-    "url": "https://github.com/Wayazi/mcp-filesystem/issues"
+    "url": "https://github.com/Wayazi/mcp_file_system/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
     "zod": "^3.24.2"
