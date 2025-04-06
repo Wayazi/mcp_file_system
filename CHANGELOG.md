@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - d3v branch
+
+### Added
+- Improved CI/CD workflow with d3v branch integration
+- Separate Docker image tagging for development and production
+- Automated testing for both d3v and main branches
+
 ## [1.0.1] - 2025-04-06
 
 ### Added
