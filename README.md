@@ -1,4 +1,4 @@
-# MCP Filesystem Server
+# MCP File System
 
 A Model Context Protocol (MCP) server that provides filesystem operations through a standardized interface.
 
