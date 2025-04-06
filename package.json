@@ -1,0 +1,44 @@
+{
+  "name": "@mcptools/filesystem",
+  "version": "1.0.0",
+  "description": "Filesystem operations MCP server providing secure file access and manipulation",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc -w",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "docker:build": "docker build -t mcptools/filesystem .",
+    "docker:run": "docker run -v $(pwd)/data:/projects mcptools/filesystem"
+  },
+  "keywords": [
+    "mcp",
+    "filesystem",
+    "claude",
+    "ai",
+    "model-context-protocol",
+    "file-operations",
+    "mcptools"
+  ],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcptools/filesystem"
+  },
+  "bugs": {
+    "url": "https://github.com/mcptools/filesystem/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.14.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.8.3"
+  }
+}
