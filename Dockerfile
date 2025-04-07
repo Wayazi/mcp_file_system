@@ -1,7 +1,7 @@
-FROM node:20-slim
+FROM node:20-alpine
 
 # Create non-root user
-RUN groupadd -r mcp && useradd -r -g mcp mcp
+RUN addgroup -S mcp && adduser -S mcp -G mcp
 
 WORKDIR /app
 
