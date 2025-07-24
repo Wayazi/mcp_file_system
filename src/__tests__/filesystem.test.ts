@@ -10,15 +10,15 @@ type McpContent = { type: 'text'; text: string }[];
 describe('Filesystem MCP Server', () => {
     let server: McpServer;
     let testDir: string;
-    
+
     beforeAll(async () => {
         // Create a temporary test directory
         testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mcp-fs-test-'));
-        
+
         // Initialize server with test directory
         server = new McpServer({
-            name: "filesystem-test",
-            version: "1.0.0"
+            name: 'filesystem-test',
+            version: '1.0.0',
         });
     });
 
@@ -46,7 +46,7 @@ describe('Filesystem MCP Server', () => {
                 return { content: [{ type: 'text' as const, text: content }] };
             };
 
-            server.tool("read_file", { path: z.string() }, readFileHandler);
+            server.tool('read_file', { path: z.string() }, readFileHandler);
             const result = await readFileHandler({ path: testFile }, {});
             expect(result.content[0].text).toBe(content);
         });
@@ -57,12 +57,19 @@ describe('Filesystem MCP Server', () => {
             const testFile = path.join(testDir, 'write-test.txt');
             const content = 'Test content';
 
-            const writeFileHandler = async ({ path: filePath, content }: { path: string, content: string }, extra: any) => {
+            const writeFileHandler = async (
+                { path: filePath, content }: { path: string; content: string },
+                extra: any
+            ) => {
                 await fs.writeFile(filePath, content, 'utf-8');
-                return { content: [{ type: 'text' as const, text: `File written successfully: ${filePath}` }] };
+                return {
+                    content: [
+                        { type: 'text' as const, text: `File written successfully: ${filePath}` },
+                    ],
+                };
             };
 
-            server.tool("write_file", { path: z.string(), content: z.string() }, writeFileHandler);
+            server.tool('write_file', { path: z.string(), content: z.string() }, writeFileHandler);
             const result = await writeFileHandler({ path: testFile, content }, {});
 
             expect(result.content[0].text).toContain('successfully');
@@ -79,13 +86,13 @@ describe('Filesystem MCP Server', () => {
 
             const listDirHandler = async ({ path: dirPath }: { path: string }, extra: any) => {
                 const entries = await fs.readdir(dirPath, { withFileTypes: true });
-                const listing = entries.map(entry => 
-                    `[${entry.isDirectory() ? 'DIR' : 'FILE'}] ${entry.name}`
-                ).join('\n');
+                const listing = entries
+                    .map(entry => `[${entry.isDirectory() ? 'DIR' : 'FILE'}] ${entry.name}`)
+                    .join('\n');
                 return { content: [{ type: 'text' as const, text: listing }] };
             };
 
-            server.tool("list_directory", { path: z.string() }, listDirHandler);
+            server.tool('list_directory', { path: z.string() }, listDirHandler);
             const result = await listDirHandler({ path: testDir }, {});
             const listing = result.content[0].text;
 
@@ -101,16 +108,33 @@ describe('Filesystem MCP Server', () => {
             const destFile = path.join(testDir, 'dest.txt');
             await fs.writeFile(sourceFile, 'content');
 
-            const moveFileHandler = async ({ source, destination }: { source: string, destination: string }, extra: any) => {
+            const moveFileHandler = async (
+                { source, destination }: { source: string; destination: string },
+                extra: any
+            ) => {
                 await fs.rename(source, destination);
-                return { content: [{ type: 'text' as const, text: `Moved successfully: ${source} -> ${destination}` }] };
+                return {
+                    content: [
+                        {
+                            type: 'text' as const,
+                            text: `Moved successfully: ${source} -> ${destination}`,
+                        },
+                    ],
+                };
             };
 
-            server.tool("move_file", { source: z.string(), destination: z.string() }, moveFileHandler);
-            const result = await moveFileHandler({
-                source: sourceFile,
-                destination: destFile
-            }, {});
+            server.tool(
+                'move_file',
+                { source: z.string(), destination: z.string() },
+                moveFileHandler
+            );
+            const result = await moveFileHandler(
+                {
+                    source: sourceFile,
+                    destination: destFile,
+                },
+                {}
+            );
 
             expect(result.content[0].text).toContain('successfully');
             await expect(fs.access(sourceFile)).rejects.toThrow();
@@ -124,7 +148,10 @@ describe('Filesystem MCP Server', () => {
             await fs.writeFile(path.join(testDir, 'test2.txt'), 'content');
             await fs.writeFile(path.join(testDir, 'other.txt'), 'content');
 
-            const searchFilesHandler = async ({ path: dirPath, pattern }: { path: string, pattern: string }, extra: any) => {
+            const searchFilesHandler = async (
+                { path: dirPath, pattern }: { path: string; pattern: string },
+                extra: any
+            ) => {
                 const entries = await fs.readdir(dirPath, { withFileTypes: true });
                 const results = entries
                     .filter(entry => entry.name.toLowerCase().includes(pattern.toLowerCase()))
@@ -132,16 +159,144 @@ describe('Filesystem MCP Server', () => {
                 return { content: [{ type: 'text' as const, text: results.join('\n') }] };
             };
 
-            server.tool("search_files", { path: z.string(), pattern: z.string() }, searchFilesHandler);
-            const result = await searchFilesHandler({
-                path: testDir,
-                pattern: 'test'
-            }, {});
+            server.tool(
+                'search_files',
+                { path: z.string(), pattern: z.string() },
+                searchFilesHandler
+            );
+            const result = await searchFilesHandler(
+                {
+                    path: testDir,
+                    pattern: 'test',
+                },
+                {}
+            );
 
             const searchResults = result.content[0].text;
             expect(searchResults).toContain('test1.txt');
             expect(searchResults).toContain('test2.txt');
             expect(searchResults).not.toContain('other.txt');
+        });
+    });
+
+    describe('copy_file tool', () => {
+        it('should copy files successfully', async () => {
+            const sourceFile = path.join(testDir, 'source.txt');
+            const destFile = path.join(testDir, 'copy.txt');
+            const content = 'test content';
+            await fs.writeFile(sourceFile, content);
+
+            const copyFileHandler = async (
+                { source, destination }: { source: string; destination: string },
+                extra: any
+            ) => {
+                const sourceStats = await fs.stat(source);
+                if (!sourceStats.isFile()) {
+                    throw new Error('Source must be a file');
+                }
+
+                try {
+                    await fs.access(destination);
+                    throw new Error('Destination already exists');
+                } catch (error: any) {
+                    if (error.code !== 'ENOENT') {
+                        throw error;
+                    }
+                }
+
+                await fs.copyFile(source, destination);
+                return {
+                    content: [
+                        {
+                            type: 'text' as const,
+                            text: `File copied successfully: ${source} -> ${destination}`,
+                        },
+                    ],
+                };
+            };
+
+            server.tool(
+                'copy_file',
+                { source: z.string(), destination: z.string() },
+                copyFileHandler
+            );
+            const result = await copyFileHandler(
+                {
+                    source: sourceFile,
+                    destination: destFile,
+                },
+                {}
+            );
+
+            expect(result.content[0].text).toContain('successfully');
+            const copiedContent = await fs.readFile(destFile, 'utf-8');
+            expect(copiedContent).toBe(content);
+            // Source should still exist
+            await expect(fs.access(sourceFile)).resolves.toBeUndefined();
+        });
+    });
+
+    describe('delete_file tool', () => {
+        it('should delete files successfully', async () => {
+            const testFile = path.join(testDir, 'delete-me.txt');
+            await fs.writeFile(testFile, 'content');
+
+            const deleteFileHandler = async ({ path: filePath }: { path: string }, extra: any) => {
+                const stats = await fs.stat(filePath);
+                if (!stats.isFile()) {
+                    throw new Error('Path is not a file');
+                }
+
+                await fs.unlink(filePath);
+                return {
+                    content: [
+                        { type: 'text' as const, text: `File deleted successfully: ${filePath}` },
+                    ],
+                };
+            };
+
+            server.tool('delete_file', { path: z.string() }, deleteFileHandler);
+            const result = await deleteFileHandler({ path: testFile }, {});
+
+            expect(result.content[0].text).toContain('successfully');
+            await expect(fs.access(testFile)).rejects.toThrow();
+        });
+    });
+
+    describe('delete_directory tool', () => {
+        it('should delete empty directories', async () => {
+            const testSubDir = path.join(testDir, 'delete-me');
+            await fs.mkdir(testSubDir);
+
+            const deleteDirectoryHandler = async (
+                { path: dirPath, recursive = false }: { path: string; recursive?: boolean },
+                extra: any
+            ) => {
+                const stats = await fs.stat(dirPath);
+                if (!stats.isDirectory()) {
+                    throw new Error('Path is not a directory');
+                }
+
+                await fs.rmdir(dirPath, { recursive });
+                return {
+                    content: [
+                        {
+                            type: 'text' as const,
+                            text: `Directory deleted successfully: ${dirPath}`,
+                        },
+                    ],
+                };
+            };
+
+            server.tool(
+                'delete_directory',
+                { path: z.string(), recursive: z.boolean().optional() },
+                deleteDirectoryHandler
+            );
+            const result = await deleteDirectoryHandler({ path: testSubDir }, {});
+
+            expect(result.content[0].text).toContain('successfully');
+            await expect(fs.access(testSubDir)).rejects.toThrow();
         });
     });
 });
