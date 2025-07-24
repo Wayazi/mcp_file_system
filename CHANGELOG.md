@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - Security Fixes
+
+### Security Fixes
+- **CRITICAL**: Fixed path validation vulnerability that allowed access to unauthorized paths
+  - Vulnerability: `validatePath()` used simple `startsWith()` check allowing access to paths like `/safe-but-dangerous` when only `/safe` was allowed
+  - Fix: Implemented proper directory boundary checking using path separators
+  - Impact: Prevents unauthorized file system access in multi-tenant environments
+- Enhanced recursive search security with path validation during directory traversal
+- Added protection against symlink-based path escapes
+
+### Added
+- Comprehensive security test suite with 5 new tests covering:
+  - Path traversal attempts
+  - Directory boundary validation  
+  - Multiple allowed directory scenarios
+  - Symlink and similar path attacks
+- Improved Docker health check for stdio-based MCP servers
+- Security documentation with vulnerability details and mitigation
+
+### Fixed
+- Docker health check attempting HTTP connections on stdio-based server
+- Missing path validation in recursive directory operations
+- Build process improvements for better Docker compatibility
+
 ## [Unreleased] - d3v branch
 
 ### Added

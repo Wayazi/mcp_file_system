@@ -42,7 +42,22 @@ The server is built using:
 
 ## Security
 
-The server implements path validation to ensure operations only occur within allowed directories specified at startup.
+The server implements robust path validation to ensure operations only occur within allowed directories specified at startup.
+
+### Security Features
+
+- **Path Validation**: All file operations validate paths against allowed directories using proper directory boundary checking
+- **Path Traversal Protection**: Prevents access outside allowed directories using `path.resolve()` and directory separator validation
+- **Symlink Safety**: Recursive operations (like search) validate paths during traversal to prevent symlink-based escapes
+- **Input Sanitization**: All user inputs are validated using Zod schemas before processing
+
+### Security Fixes (v1.0.1)
+
+**Critical Security Vulnerability Fixed**: The path validation function previously used a simple `startsWith()` check that could be bypassed. For example, if `/safe` was an allowed directory, an attacker could potentially access `/safe-but-dangerous`. 
+
+**Fix**: Updated `validatePath()` to use proper directory boundary checking by ensuring paths either exactly match the allowed directory or start with the directory followed by a path separator.
+
+**Testing**: Added comprehensive security test suite covering path traversal attempts, boundary checking, and edge cases.
 
 ## License
 

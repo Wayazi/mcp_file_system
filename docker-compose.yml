@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
     # Remove ports since this is a stdio-based MCP server, not HTTP
     healthcheck:
-      test: ["CMD", "node", "-e", "try { require('./dist/index.js'); console.log('MCP server binary is ready'); process.exit(0); } catch(e) { console.error('Health check failed:', e.message); process.exit(1); }"]
+      test: ["/app/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
