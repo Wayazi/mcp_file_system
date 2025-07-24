@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "./node_modules/.bin/tsc",
     "start": "node dist/index.js",
-    "dev": "tsc -w",
+    "dev": "./node_modules/.bin/tsc -w",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "docker:build": "docker build -t mcptools/filesystem .",
     "docker:run": "docker run -v $(pwd)/data:/projects mcptools/filesystem"

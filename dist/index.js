@@ -11,7 +11,14 @@ if (allowedDirs.length === 0) {
 // Validate paths are within allowed directories
 function validatePath(filePath) {
     const absolutePath = path.resolve(filePath);
-    if (!allowedDirs.some(dir => absolutePath.startsWith(path.resolve(dir)))) {
+    const isAllowed = allowedDirs.some(dir => {
+        const resolvedDir = path.resolve(dir);
+        // Ensure the path is within the directory by checking that it starts with the directory
+        // followed by a path separator, or is exactly the directory
+        return absolutePath === resolvedDir ||
+            absolutePath.startsWith(resolvedDir + path.sep);
+    });
+    if (!isAllowed) {
         throw new Error(`Access denied: ${filePath} is not within allowed directories`);
     }
     return absolutePath;
@@ -143,9 +150,25 @@ server.tool("search_files", { path: z.string().describe("Starting directory"), p
         const validPath = validatePath(dirPath);
         const results = [];
         async function searchDir(currentPath) {
+            // Validate that we're still within allowed directories during recursion
+            try {
+                validatePath(currentPath);
+            }
+            catch (error) {
+                // Skip directories that are outside allowed paths (e.g., symlink targets)
+                return;
+            }
             const entries = await fs.readdir(currentPath, { withFileTypes: true });
             for (const entry of entries) {
                 const fullPath = path.join(currentPath, entry.name);
+                // Validate each path before processing
+                try {
+                    validatePath(fullPath);
+                }
+                catch (error) {
+                    // Skip files/directories outside allowed paths
+                    continue;
+                }
                 // Check exclude patterns
                 if (excludePatterns.some(exclude => fullPath.toLowerCase().includes(exclude.toLowerCase()))) {
                     continue;
