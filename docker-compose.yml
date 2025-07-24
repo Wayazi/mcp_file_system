@@ -7,10 +7,9 @@ services:
       - ${PROJECTS_DIR:-./data}:/projects
     environment:
       - NODE_ENV=production
-    ports:
-      - "3000:3000"
+    # Remove ports since this is a stdio-based MCP server, not HTTP
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').request({hostname:'localhost',port:3000,path:'/health',timeout:2000}).end().on('error',()=>process.exit(1))"]
+      test: ["/app/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3

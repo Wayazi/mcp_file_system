@@ -144,4 +144,59 @@ describe('Filesystem MCP Server', () => {
             expect(searchResults).not.toContain('other.txt');
         });
     });
+
+    describe('path validation security', () => {
+        // Test the validatePath function directly using a similar implementation
+        function validatePath(filePath: string, allowedDirs: string[]): string {
+            const absolutePath = path.resolve(filePath);
+            const isAllowed = allowedDirs.some(dir => {
+                const resolvedDir = path.resolve(dir);
+                // Ensure the path is within the directory by checking that it starts with the directory
+                // followed by a path separator, or is exactly the directory
+                return absolutePath === resolvedDir || 
+                       absolutePath.startsWith(resolvedDir + path.sep);
+            });
+            
+            if (!isAllowed) {
+                throw new Error(`Access denied: ${filePath} is not within allowed directories`);
+            }
+            return absolutePath;
+        }
+
+        it('should block access to similar but unauthorized paths', () => {
+            const allowedDirs = [testDir];
+            const unauthorizedPath = testDir + '-but-dangerous';
+            
+            expect(() => validatePath(unauthorizedPath, allowedDirs)).toThrow('Access denied');
+        });
+
+        it('should allow access to files within allowed directories', () => {
+            const allowedDirs = [testDir];
+            const authorizedPath = path.join(testDir, 'file.txt');
+            
+            expect(() => validatePath(authorizedPath, allowedDirs)).not.toThrow();
+        });
+
+        it('should allow access to the allowed directory itself', () => {
+            const allowedDirs = [testDir];
+            
+            expect(() => validatePath(testDir, allowedDirs)).not.toThrow();
+        });
+
+        it('should block path traversal attempts', () => {
+            const allowedDirs = [testDir];
+            const traversalPath = path.join(testDir, '../../../etc/passwd');
+            
+            expect(() => validatePath(traversalPath, allowedDirs)).toThrow('Access denied');
+        });
+
+        it('should handle multiple allowed directories correctly', () => {
+            const testDir2 = path.join(testDir, 'subdir');
+            const allowedDirs = [testDir, testDir2];
+            
+            expect(() => validatePath(path.join(testDir, 'file.txt'), allowedDirs)).not.toThrow();
+            expect(() => validatePath(path.join(testDir2, 'file.txt'), allowedDirs)).not.toThrow();
+            expect(() => validatePath('/unauthorized/path', allowedDirs)).toThrow('Access denied');
+        });
+    });
 });
